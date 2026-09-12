@@ -7,6 +7,8 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.util.ArrayList;
+import java.util.List;
 
 @Service
 public class UrlAnalyzerService {
@@ -53,5 +55,40 @@ public class UrlAnalyzerService {
                     e.getMessage()
             );
         }
+    }
+
+    public List<UrlAnalysisResult> analyzeConcurrently(List<String> urls) {
+
+        // Naive Implementation
+        List<UrlAnalysisResult> results = new ArrayList<>();
+        List<Thread> threads = new ArrayList<>();
+
+        for (String url : urls) {
+            Thread thread = new Thread(
+                    () -> {
+                        System.out.println("Starting: " + url + " on " + Thread.currentThread().getName());
+                        UrlAnalysisResult result = this.analyze(url);
+                        synchronized (result) {     // Added to resolve the race-condition so that one thread can execute the code inside it
+                            results.add(result);
+                        }
+                        System.out.println("Finished: " + url + " on " + Thread.currentThread().getName());
+                    },
+                    "url-worker-" + threads.size()
+            );
+
+            threads.add(thread);
+            thread.start();
+        }
+
+        for (Thread thread : threads) {
+            try {
+                thread.join();
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new RuntimeException(e);
+            }
+        }
+
+        return results;
     }
 }

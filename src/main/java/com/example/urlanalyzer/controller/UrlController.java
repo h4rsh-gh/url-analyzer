@@ -36,4 +36,9 @@ public class UrlController {
 
         return results;
     }
+
+    @PostMapping("/analyze/concurrent")
+    public List<UrlAnalysisResult> analyzeConcurrently(@Valid @RequestBody AnalyzerUrlsRequest request) {
+        return this.urlAnalyzerService.analyzeConcurrently(request.urls());
+    }
 }
