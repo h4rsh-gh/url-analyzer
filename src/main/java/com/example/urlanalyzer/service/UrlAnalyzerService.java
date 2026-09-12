@@ -9,6 +9,10 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 @Service
 public class UrlAnalyzerService {
@@ -20,6 +24,7 @@ public class UrlAnalyzerService {
     }
 
     public UrlAnalysisResult analyze(String url) {
+        System.out.println("START " + url + " | " + Thread.currentThread().getName());
         long start = System.nanoTime();
 
         try {
@@ -35,6 +40,8 @@ public class UrlAnalyzerService {
 
             int responseSize = response.body().getBytes().length;
 
+            System.out.println("END " + url + " | " + Thread.currentThread().getName());
+
             return new UrlAnalysisResult(
                     url,
                     response.statusCode(),
@@ -45,6 +52,8 @@ public class UrlAnalyzerService {
             );
         } catch (Exception e) {
             long responseTimeMs = (System.nanoTime() - start) / 1_000_000;
+
+            System.out.println("END " + url + " | " + Thread.currentThread().getName());
 
             return new UrlAnalysisResult(
                     url,
@@ -88,6 +97,34 @@ public class UrlAnalyzerService {
                 throw new RuntimeException(e);
             }
         }
+
+        return results;
+    }
+
+    public List<UrlAnalysisResult> analyzeWithExecutor(List<String> urls) {
+        ExecutorService executor = Executors.newFixedThreadPool(4);
+
+        List<Future<UrlAnalysisResult>> futures = new ArrayList<>();
+
+        for (String url : urls) {
+            Future<UrlAnalysisResult> future = executor.submit(() -> this.analyze(url));
+            futures.add(future);
+        }
+
+        List<UrlAnalysisResult> results = new ArrayList<>();
+
+        for (Future<UrlAnalysisResult> future : futures) {
+            try {
+                results.add(future.get());
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new RuntimeException(e);
+            } catch (ExecutionException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        executor.shutdown();
 
         return results;
     }
