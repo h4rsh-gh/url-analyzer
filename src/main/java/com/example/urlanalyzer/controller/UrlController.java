@@ -46,4 +46,9 @@ public class UrlController {
     public List<UrlAnalysisResult> analyzeWithExecutor(@Valid @RequestBody AnalyzerUrlsRequest request) {
         return urlAnalyzerService.analyzeWithExecutor(request.urls());
     }
+
+    @PostMapping("/analyze/thread-pool")
+    public List<UrlAnalysisResult> analyzeWithThreadPoolExecutor(@Valid @RequestBody AnalyzerUrlsRequest request) {
+        return urlAnalyzerService.analyzeWithThreadPoolExecutor(request.urls());
+    }
 }

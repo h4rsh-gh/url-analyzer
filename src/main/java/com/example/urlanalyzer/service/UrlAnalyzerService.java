@@ -9,10 +9,8 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @Service
 public class UrlAnalyzerService {
@@ -109,6 +107,57 @@ public class UrlAnalyzerService {
         for (String url : urls) {
             Future<UrlAnalysisResult> future = executor.submit(() -> this.analyze(url));
             futures.add(future);
+        }
+
+        List<UrlAnalysisResult> results = new ArrayList<>();
+
+        for (Future<UrlAnalysisResult> future : futures) {
+            try {
+                results.add(future.get());
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new RuntimeException(e);
+            } catch (ExecutionException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        executor.shutdown();
+
+        return results;
+    }
+
+    public List<UrlAnalysisResult> analyzeWithThreadPoolExecutor(List<String> urls) {
+        BlockingQueue<Runnable> queue = new ArrayBlockingQueue<>(2);
+        AtomicInteger threadNumber = new AtomicInteger(1);
+
+        ThreadFactory threadFactory = runnable -> {
+            Thread thread = new Thread(runnable);
+            thread.setName("url-analyzer-worker-" + threadNumber.getAndIncrement());
+            return thread;
+        };
+
+        ThreadPoolExecutor executor = new ThreadPoolExecutor(
+                2,
+                2,
+                10,
+                TimeUnit.MILLISECONDS,
+                queue,
+                threadFactory,
+                new ThreadPoolExecutor.AbortPolicy()
+        );
+
+        List<Future<UrlAnalysisResult>> futures = new ArrayList<>();
+
+        for (String url : urls) {
+            Future<UrlAnalysisResult> future = executor.submit(() -> this.analyze(url));
+            futures.add(future);
+            System.out.println(
+                    "Pool size: " + executor.getPoolSize()
+                            + ", Active: " + executor.getActiveCount()
+                            + ", Queue: " + executor.getQueue().size()
+                            + ", Completed: " + executor.getCompletedTaskCount()
+            );
         }
 
         List<UrlAnalysisResult> results = new ArrayList<>();
