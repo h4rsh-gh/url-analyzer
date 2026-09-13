@@ -1,6 +1,7 @@
 package com.example.urlanalyzer.controller;
 
 import com.example.urlanalyzer.concurrency.BlockingQueueDemo;
+import com.example.urlanalyzer.concurrency.RejectionPolicyDemo;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -10,14 +11,22 @@ import org.springframework.web.bind.annotation.RestController;
 public class ConcurrencyController {
 
     private final BlockingQueueDemo blockingQueueDemo;
+    private final RejectionPolicyDemo rejectionPolicyDemo;
 
-    public ConcurrencyController(BlockingQueueDemo blockingQueueDemo) {
+    public ConcurrencyController(BlockingQueueDemo blockingQueueDemo, RejectionPolicyDemo rejectionPolicyDemo) {
         this.blockingQueueDemo = blockingQueueDemo;
+        this.rejectionPolicyDemo = rejectionPolicyDemo;
     }
 
     @GetMapping("/blocking-queue")
     public String runBlockingQueueExperiment() throws InterruptedException {
         this.blockingQueueDemo.runExperiment();
+        return "Experiment completed";
+    }
+
+    @GetMapping("/rejection-policy")
+    public String rejectionPolicyExperiment() throws InterruptedException {
+        this.rejectionPolicyDemo.runExperiment();
         return "Experiment completed";
     }
 }
