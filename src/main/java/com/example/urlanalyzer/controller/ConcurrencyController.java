@@ -16,8 +16,9 @@ public class ConcurrencyController {
     private final IntrinsicLockDemo intrinsicLockDemo;
     private final AtomicVariableDemo atomicVariableDemo;
     private final VolatileDemo volatileDemo;
+    private final WaitNotifyDemo waitNotifyDemo;
 
-    public ConcurrencyController(BlockingQueueDemo blockingQueueDemo, RejectionPolicyDemo rejectionPolicyDemo, CallableDemo callableDemo, LockDemo lockDemo, IntrinsicLockDemo intrinsicLockDemo, AtomicVariableDemo atomicVariableDemo, VolatileDemo volatileDemo) {
+    public ConcurrencyController(BlockingQueueDemo blockingQueueDemo, RejectionPolicyDemo rejectionPolicyDemo, CallableDemo callableDemo, LockDemo lockDemo, IntrinsicLockDemo intrinsicLockDemo, AtomicVariableDemo atomicVariableDemo, VolatileDemo volatileDemo, WaitNotifyDemo waitNotifyDemo) {
         this.blockingQueueDemo = blockingQueueDemo;
         this.rejectionPolicyDemo = rejectionPolicyDemo;
         this.callableDemo = callableDemo;
@@ -25,6 +26,7 @@ public class ConcurrencyController {
         this.intrinsicLockDemo = intrinsicLockDemo;
         this.atomicVariableDemo = atomicVariableDemo;
         this.volatileDemo = volatileDemo;
+        this.waitNotifyDemo = waitNotifyDemo;
     }
 
     @GetMapping("/blocking-queue")
@@ -66,6 +68,12 @@ public class ConcurrencyController {
     @GetMapping("/volatile")
     public String volatileExperiment() throws Exception {
         this.volatileDemo.runExperiment();
+        return "Experiment completed";
+    }
+
+    @GetMapping("/wait")
+    public String waitExperiment() throws Exception {
+        this.waitNotifyDemo.runExperiment();
         return "Experiment completed";
     }
 }
